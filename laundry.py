@@ -2,17 +2,12 @@ import os
 import requests
 import pandas as pd
 
-# ==========================================
-# Location (Ayutthaya)
-# ==========================================
 LATITUDE = 14.3532
 LONGITUDE = 100.5689
 
 WEBHOOK_URL = os.getenv("TEAMS_WEBHOOK_URL")
 
-# ==========================================
-# Get Location Name
-# ==========================================
+# Location
 geo_url = (
     f"https://nominatim.openstreetmap.org/reverse"
     f"?lat={LATITUDE}"
@@ -27,9 +22,7 @@ location = requests.get(
 
 location_name = location.get("display_name", "Unknown")
 
-# ==========================================
-# Open-Meteo
-# ==========================================
+# Weather
 weather_url = (
     "https://api.open-meteo.com/v1/forecast"
     f"?latitude={LATITUDE}"
@@ -50,12 +43,8 @@ df = pd.DataFrame({
     "temp": weather["daily"]["temperature_2m_max"]
 })
 
-# ==========================================
-# Laundry Score
-# ==========================================
 df["score"] = (
-    (100 - df["rain_prob"]) * 0.7
-    +
+    (100 - df["rain_prob"]) * 0.7 +
     (100 - (df["rain_mm"] * 5).clip(upper=100)) * 0.3
 )
 
@@ -74,67 +63,74 @@ for _, row in df.iterrows():
 
     forecast_text += (
         f"{icon} {row['date']} | "
-        f"Score {row['score']:.0f} | "
+        f"Score {row['score'\]:.0f} | "
         f"Rain {row['rain_prob']}%\n"
     )
 
-# ==========================================
-# Adaptive Card
-# ==========================================
+# Teams Workflow Template Format
 payload = {
-    "type": "AdaptiveCard",
-    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-    "version": "1.4",
-    "body": [
+    "body": "Laundry Advisor",
+    "attachments": [
         {
-            "type": "TextBlock",
-            "size": "Large",
-            "weight": "Bolder",
-            "text": "🧺 Laundry Advisor"
-        },
-        {
-            "type": "TextBlock",
-            "wrap": True,
-            "text": location_name
-        },
-        {
-            "type": "FactSet",
-            "facts": [
-                {
-                    "title": "Best Day",
-                    "value": best["date"]
-                },
-                {
-                    "title": "Score",
-                    "value": f"{best['score']:.1f}/100"
-                },
-                {
-                    "title": "Rain",
-                    "value": f"{best['rain_prob']}%"
-                },
-                {
-                    "title": "Temperature",
-                    "value": f"{best['temp']}°C"
-                }
-            ]
-        },
-        {
-            "type": "TextBlock",
-            "weight": "Bolder",
-            "text": "7-Day Recommendation"
-        },
-        {
-            "type": "TextBlock",
-            "wrap": True,
-            "text": forecast_text
+            "contentType": "application/vnd.microsoft.card.adaptive",
+            "content": {
+                "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                "type": "AdaptiveCard",
+                "version": "1.4",
+                "body": [
+                    {
+                        "type": "TextBlock",
+                        "size": "Large",
+                        "weight": "Bolder",
+                        "text": "🧺 Laundry Advisor"
+                    },
+                    {
+                        "type": "TextBlock",
+                        "wrap": True,
+                        "text": location_name
+                    },
+                    {
+                        "type": "FactSet",
+                        "facts": [
+                            {
+                                "title": "Best Day",
+                                "value": str(best["date"])
+                            },
+                            {
+                                "title": "Score",
+                                "value": f"{best['score'\]:.1f}/100"
+                            },
+                            {
+                                "title": "Rain",
+                                "value": f"{best['rain_prob']}%"
+                            },
+                            {
+                              "title": "Temperature",
+                                "value": f"{best['temp']}°C"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "TextBlock",
+                        "weight": "Bolder",
+                        "text": "7-Day Recommendation"
+                    },
+                    {
+                        "type": "TextBlock",
+                        "wrap": True,
+                        "text": forecast_text
+                    }
+                ]
+            }
         }
     ]
 }
 
-print(payload)
-
-requests.post(
+response = requests.post(
     WEBHOOK_URL,
     json=payload,
     timeout=30
 )
+
+print(response.status_code)
+print(response.text)
