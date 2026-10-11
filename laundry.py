@@ -74,7 +74,7 @@ for _, row in df.iterrows():
 
     forecast_text += (
         f"{icon} {row['date']} | "
-        f"Score {row['score'\]:.0f} | "
+        f"Score {row['score']:.0f} | "
         f"Rain {row['rain_prob']}%\n"
     )
 
@@ -106,7 +106,7 @@ payload = {
                 },
                 {
                     "title": "Score",
-                    "value": f"{best['score'\]:.1f}/100"
+                    "value": f"{best['score']:.1f}/100"
                 },
                 {
                     "title": "Rain",
