@@ -2,8 +2,11 @@ import os
 import requests
 import pandas as pd
 
-LATITUDE = 14.3532
-LONGITUDE = 100.5689
+#LATITUDE = 14.3532
+#LONGITUDE = 100.5689
+
+LATITUDE = float(os.getenv("LATITUDE"))
+LONGITUDE = float(os.getenv("LONGITUDE"))
 
 WEBHOOK_URL = os.getenv("TEAMS_WEBHOOK_URL")
 
